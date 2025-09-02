@@ -112,25 +112,42 @@ const RoutingTableTool: React.FC<{ routes: RouteEntry[] }> = ({ routes }) => {
 // --- pfTop Tool ---
 const PfTopTool: React.FC<{ initialStates: FirewallState[] }> = ({ initialStates }) => {
     const [states, setStates] = useState(initialStates);
+    const [filter, setFilter] = useState('');
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setStates(prevStates => {
-                const newStates = [...prevStates].sort(() => 0.5 - Math.random());
-                return newStates.map(s => {
+            // Start with the full initial set of states
+            let processedStates = [...initialStates]
+                // 1. Simulate updates
+                .map(s => {
                     const [p1, p2] = s.packets.split(':').map(Number);
                     const newPackets = `${p1 + Math.floor(Math.random()*5)}:${p2 + Math.floor(Math.random()*5)}`;
                     return {...s, packets: newPackets};
-                }).sort((a,b) => {
+                })
+                // 2. Sort by activity
+                .sort((a,b) => {
                     const aTotal = a.bytes.split(':').reduce((sum, p) => sum + parseInt(p.replace(/[^\d]/g, '')) , 0);
                     const bTotal = b.bytes.split(':').reduce((sum, p) => sum + parseInt(p.replace(/[^\d]/g, '')) , 0);
                     return bTotal - aTotal;
                 });
-            });
+            
+            // 3. Apply filter if it exists
+            if (filter) {
+                const lowercasedFilter = filter.toLowerCase();
+                processedStates = processedStates.filter(entry =>
+                    entry.source.toLowerCase().includes(lowercasedFilter) ||
+                    entry.destination.toLowerCase().includes(lowercasedFilter) ||
+                    entry.state.toLowerCase().includes(lowercasedFilter)
+                );
+            }
+
+            // 4. Set the final state
+            setStates(processedStates);
+
         }, 2000); 
 
         return () => clearInterval(interval);
-    }, []);
+    }, [filter, initialStates]);
 
     return (
         <div>
@@ -147,6 +164,13 @@ const PfTopTool: React.FC<{ initialStates: FirewallState[] }> = ({ initialStates
                     <span className="text-sm font-medium text-accent-blue">Live Update</span>
                 </div>
             </div>
+             <input
+                type="text"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder="Filter by source, destination, or state..."
+                className="w-full sm:w-72 mb-4 bg-gray-700 text-gray-200 placeholder-gray-400 border border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-blue"
+            />
             <div className="overflow-x-auto h-96">
                 <table className="min-w-full text-sm text-left text-gray-300 font-mono">
                     <thead className="text-xs text-gray-400 uppercase bg-gray-900/50">

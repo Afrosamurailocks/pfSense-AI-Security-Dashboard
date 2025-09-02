@@ -1,4 +1,3 @@
-
 export interface FirewallRule {
   id: number;
   action: 'pass' | 'block' | 'reject';
@@ -102,6 +101,8 @@ export interface User {
   fullName: string;
   groups: string[];
   disabled: boolean;
+  role: 'admin' | 'user';
+  password?: string;
 }
 
 export interface ArpEntry {

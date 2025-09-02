@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, Fragment } from 'react';
 import { VPNConnection, SiteToSiteVPN, Phase1Status, Phase2Status } from '../types';
 import { DiagnosticToolType } from '../App';
@@ -20,31 +19,35 @@ const getProtocolClass = (protocol: 'OpenVPN' | 'WireGuard' | 'IPsec') => {
 }
 
 const RemoteAccessTable: React.FC<{ connections: VPNConnection[], runDiagnostic: VPNConnectionsProps['runDiagnostic'] }> = ({ connections, runDiagnostic }) => {
-    const [filter, setFilter] = useState('');
+    const [selectedServer, setSelectedServer] = useState('All Servers');
+
+    const uniqueServers = useMemo(() => {
+        return ['All Servers', ...new Set(connections.map(c => c.server))];
+    }, [connections]);
 
     const filteredConnections = useMemo(() => {
-        if (!filter) {
+        if (selectedServer === 'All Servers') {
             return connections;
         }
-        const lowercasedFilter = filter.toLowerCase();
-        return connections.filter(c => 
-            c.user.toLowerCase().includes(lowercasedFilter) ||
-            c.server.toLowerCase().includes(lowercasedFilter) ||
-            c.remoteIp.toLowerCase().includes(lowercasedFilter) ||
-            c.virtualIp.toLowerCase().includes(lowercasedFilter)
-        );
-    }, [connections, filter]);
+        return connections.filter(c => c.server === selectedServer);
+    }, [connections, selectedServer]);
 
     return (
         <div>
             <div className="mb-4">
-                 <input
-                    type="text"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    placeholder="Search by user, server, or IP..."
-                    className="w-full sm:w-72 bg-gray-700 text-gray-200 placeholder-gray-400 border border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-blue"
-                />
+                 <div className="flex items-center space-x-2">
+                    <label htmlFor="server-filter" className="text-sm font-medium text-gray-400">Filter by Server:</label>
+                    <select
+                        id="server-filter"
+                        value={selectedServer}
+                        onChange={(e) => setSelectedServer(e.target.value)}
+                        className="w-full sm:w-60 bg-gray-700 text-gray-200 border border-gray-600 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-blue"
+                    >
+                        {uniqueServers.map(server => (
+                            <option key={server} value={server}>{server}</option>
+                        ))}
+                    </select>
+                 </div>
             </div>
             <div className="overflow-x-auto max-h-96">
                 <table className="min-w-full text-sm text-left text-gray-300">

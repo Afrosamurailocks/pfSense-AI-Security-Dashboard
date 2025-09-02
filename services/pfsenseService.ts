@@ -1,4 +1,3 @@
-
 import { 
     PfSenseData, 
     HAStatus,
@@ -28,6 +27,12 @@ const extractIp = (message: string): string | undefined => {
   const ipRegex = /(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)/;
   const match = message.match(ipRegex);
   return match ? match[0] : undefined;
+};
+
+// Module-level state for demonstrating HA status changes
+let haSyncStatus: 'In Sync' | 'Out of Sync' = 'In Sync';
+const toggleHASync = () => {
+  haSyncStatus = haSyncStatus === 'In Sync' ? 'Out of Sync' : 'In Sync';
 };
 
 // This is a mock service. In a real application, this would make API calls to a backend.
@@ -140,10 +145,10 @@ const generateMockData = (): PfSenseData => {
   ];
 
   const users: User[] = [
-      { username: 'admin', fullName: 'System Administrator', groups: ['admins'], disabled: false },
-      { username: 'john.doe', fullName: 'John Doe', groups: ['vpn_users'], disabled: false },
-      { username: 'jane.smith', fullName: 'Jane Smith', groups: ['vpn_users'], disabled: false },
-      { username: 'guest', fullName: 'Guest User', groups: [], disabled: true },
+      { username: 'admin', fullName: 'System Administrator', groups: ['admins'], disabled: false, role: 'admin', password: 'pfsense' },
+      { username: 'john.doe', fullName: 'John Doe', groups: ['vpn_users'], disabled: false, role: 'user', password: 'password' },
+      { username: 'jane.smith', fullName: 'Jane Smith', groups: ['vpn_users'], disabled: false, role: 'user', password: 'password' },
+      { username: 'guest', fullName: 'Guest User', groups: [], disabled: true, role: 'user', password: 'password' },
   ];
   
   const arpTable: ArpEntry[] = [
@@ -220,7 +225,7 @@ const generateMockData = (): PfSenseData => {
 
   const haStatus: HAStatus = {
     enabled: true,
-    syncStatus: 'In Sync',
+    syncStatus: haSyncStatus, // Use the shared state
     lastSync: '2024-08-01 11:35:02',
     localNode: { name: 'pfsense-1.local', role: 'MASTER', ip: '192.168.1.1' },
     remoteNode: { name: 'pfsense-2.local', role: 'BACKUP', ip: '192.168.1.2' },
@@ -241,6 +246,24 @@ export const pfSenseService = {
       setTimeout(() => {
         resolve(generateMockData());
       }, 500);
+    });
+  },
+  fetchHAStatus: (): Promise<HAStatus> => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            toggleHASync(); // Toggle status for demonstration
+            resolve({
+                enabled: true,
+                syncStatus: haSyncStatus,
+                lastSync: new Date().toLocaleTimeString(),
+                localNode: { name: 'pfsense-1.local', role: 'MASTER', ip: '192.168.1.1' },
+                remoteNode: { name: 'pfsense-2.local', role: 'BACKUP', ip: '192.168.1.2' },
+                carpVips: [
+                    { vhid: 1, ip: '203.0.113.1', status: 'MASTER' },
+                    { vhid: 2, ip: '192.168.1.254', status: 'MASTER' },
+                ]
+            });
+        }, 500);
     });
   },
 };

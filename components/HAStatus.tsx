@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { HAStatus } from '../types';
 
@@ -19,7 +18,9 @@ const getVipStatusClass = (status: 'MASTER' | 'BACKUP' | 'INIT') => {
 }
 
 const getSyncStatusClass = (status: 'In Sync' | 'Out of Sync') => {
-    return status === 'In Sync' ? 'bg-accent-green text-green-100' : 'bg-accent-red text-red-100';
+    const baseClass = status === 'In Sync' ? 'bg-accent-green text-green-100' : 'bg-accent-red text-red-100';
+    const pulseClass = status === 'Out of Sync' ? 'animate-pulse' : '';
+    return `${baseClass} ${pulseClass}`;
 }
 
 const HAStatus: React.FC<HAStatusProps> = ({ status }) => {
