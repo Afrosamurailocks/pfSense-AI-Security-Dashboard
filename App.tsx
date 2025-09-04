@@ -13,14 +13,19 @@ import Login from './components/Login';
 import NdpTable from './components/NdpTable';
 import Sockets from './components/Sockets';
 import SmartStatus from './components/SmartStatus';
+import IntegrationSettings from './components/IntegrationSettings';
+import ReportCenter from './components/ReportCenter';
+import CustomDashboard from './components/CustomDashboard';
+import AIMonitoringAgent from './components/AIMonitoringAgent';
 
 import { pfSenseService } from './services/pfsenseService';
 import { authService } from './services/authService';
-import { PfSenseData, User } from './types';
+import { PfSenseData, User, IntegrationSettings as IntegrationSettingsType } from './types';
 
 export type View = 
   | 'dashboard' 
-  | 'system_logs'
+  | 'custom_dashboard'
+  | 'system_logs' 
   | 'user_manager'
   | 'firewall_rules' 
   | 'firewall_logs'
@@ -29,7 +34,10 @@ export type View =
   | 'diagnostics'
   | 'ndp_table'
   | 'sockets'
-  | 'smart_status';
+  | 'smart_status'
+  | 'integration_settings'
+  | 'report_center'
+  | 'ai_monitoring_agent';
 
 export type DiagnosticToolType = 'ping' | 'traceroute' | 'dnslookup';
   
@@ -72,29 +80,10 @@ const App: React.FC = () => {
   useEffect(() => {
     if (currentUser) {
       fetchData();
+      const intervalId = setInterval(fetchData, 10000); // Fetch data every 10 seconds
+      return () => clearInterval(intervalId);
     }
   }, [currentUser, fetchData]);
-
-  // Effect for polling HA status
-  useEffect(() => {
-    if (!currentUser || !data?.haStatus.enabled) {
-      return;
-    }
-
-    const intervalId = setInterval(async () => {
-      try {
-        const newHAStatus = await pfSenseService.fetchHAStatus();
-        setData(prevData => {
-          if (!prevData) return null;
-          return { ...prevData, haStatus: newHAStatus };
-        });
-      } catch (error) {
-        console.error("Failed to fetch HA status update", error);
-      }
-    }, 5000); // Poll every 5 seconds
-
-    return () => clearInterval(intervalId); // Cleanup on unmount or when dependencies change
-  }, [currentUser, data?.haStatus.enabled]);
 
 
   const handleLogin = (user: User) => {
@@ -106,13 +95,25 @@ const App: React.FC = () => {
     authService.logout();
     setCurrentUser(null);
   };
+  
+  const handleUpdateUsers = (updatedUsers: User[]) => {
+    if (data) {
+        setData({ ...data, users: updatedUsers });
+    }
+  };
+  
+  const handleUpdateIntegrationSettings = (updatedSettings: IntegrationSettingsType) => {
+      if(data) {
+          setData({ ...data, integrationSettings: updatedSettings });
+      }
+  };
 
   if (!currentUser) {
     return <Login onLogin={handleLogin} />;
   }
 
   const renderView = () => {
-    if (loading) {
+    if (loading && !data) { // Show initial loading spinner, but not on background refreshes
       return (
         <div className="flex justify-center items-center h-96">
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-accent-blue"></div>
@@ -133,10 +134,12 @@ const App: React.FC = () => {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard data={data} runDiagnostic={runDiagnostic} />;
+      case 'custom_dashboard':
+        return <CustomDashboard data={data} runDiagnostic={runDiagnostic} currentUser={currentUser} />;
       case 'system_logs':
         return <PageContainer title="System Logs"><SystemLogs logs={data.systemLogs} runDiagnostic={runDiagnostic} /></PageContainer>;
       case 'user_manager':
-        return <PageContainer title="User Manager"><UserManager users={data.users} currentUser={currentUser} /></PageContainer>;
+        return <PageContainer title="User Manager"><UserManager users={data.users} currentUser={currentUser} onUpdateUsers={handleUpdateUsers} /></PageContainer>;
       case 'firewall_rules':
         return <PageContainer title="Firewall Rules"><FirewallRulesTable rules={data.firewallRules} /></PageContainer>;
       case 'firewall_logs':
@@ -158,6 +161,12 @@ const App: React.FC = () => {
         return <PageContainer title="Sockets"><Sockets sockets={data.sockets} /></PageContainer>;
       case 'smart_status':
         return <PageContainer title="S.M.A.R.T. Status"><SmartStatus smartStatus={data.smartStatus} /></PageContainer>;
+      case 'integration_settings':
+        return <IntegrationSettings settings={data.integrationSettings} onSave={handleUpdateIntegrationSettings} />;
+      case 'report_center':
+        return <ReportCenter data={data} />;
+      case 'ai_monitoring_agent':
+        return <AIMonitoringAgent data={data} currentUser={currentUser} />;
       default:
         return <Dashboard data={data} runDiagnostic={runDiagnostic} />;
     }

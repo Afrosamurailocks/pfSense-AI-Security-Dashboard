@@ -1,5 +1,5 @@
 {
-  "name": "pfSense AI Security Dashboard",
+  "name": "Copy of pfSense AI Security Dashboard",
   "description": "An AI-powered dashboard for monitoring the security and observability of a pfSense firewall on an EC2 instance, providing insights and recommendations based on best practices.",
   "requestFramePermissions": []
 }

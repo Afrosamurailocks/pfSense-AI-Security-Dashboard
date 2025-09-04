@@ -1,19 +1,66 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User } from '../types';
+import AddUserModal from './AddUserModal';
+import ConfirmModal from './ConfirmModal';
 
 interface UserManagerProps {
   users: User[];
   currentUser: User | null;
+  onUpdateUsers: (updatedUsers: User[]) => void;
 }
 
-const UserManager: React.FC<UserManagerProps> = ({ users, currentUser }) => {
+const UserManager: React.FC<UserManagerProps> = ({ users, currentUser, onUpdateUsers }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  
   const isAdmin = currentUser?.role === 'admin';
+
+  const handleAdd = () => {
+    setUserToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (user: User) => {
+    setUserToEdit(user);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (user: User) => {
+    setUserToDelete(user);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleSaveUser = (userToSave: User) => {
+    let updatedUsers;
+    if (userToEdit) {
+      updatedUsers = users.map(u => u.username === userToEdit.username ? userToSave : u);
+    } else {
+      if (users.some(u => u.username === userToSave.username)) {
+        alert("A user with that username already exists.");
+        return;
+      }
+      updatedUsers = [...users, userToSave];
+    }
+    onUpdateUsers(updatedUsers);
+    setIsModalOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    if (userToDelete) {
+      const updatedUsers = users.filter(u => u.username !== userToDelete.username);
+      onUpdateUsers(updatedUsers);
+      setUserToDelete(null);
+      setIsConfirmModalOpen(false);
+    }
+  };
 
   return (
     <div>
       {isAdmin && (
         <div className="mb-4 flex justify-end space-x-2">
-           <button className="bg-accent-green hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300">
+           <button onClick={handleAdd} className="bg-accent-green hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300">
             Add User
           </button>
         </div>
@@ -48,8 +95,8 @@ const UserManager: React.FC<UserManagerProps> = ({ users, currentUser }) => {
                 </td>
                 {isAdmin && (
                     <td className="px-4 py-2 space-x-2">
-                        <button className="text-accent-blue hover:underline text-xs">Edit</button>
-                        <button className="text-accent-red hover:underline text-xs">Delete</button>
+                        <button onClick={() => handleEdit(user)} className="text-accent-blue hover:underline text-xs">Edit</button>
+                        <button onClick={() => handleDelete(user)} className="text-accent-red hover:underline text-xs">Delete</button>
                     </td>
                 )}
               </tr>
@@ -57,6 +104,21 @@ const UserManager: React.FC<UserManagerProps> = ({ users, currentUser }) => {
           </tbody>
         </table>
       </div>
+      
+      <AddUserModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveUser}
+        userToEdit={userToEdit}
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Confirm Delete User"
+        message={`Are you sure you want to delete the user "${userToDelete?.username}"? This action cannot be undone.`}
+      />
     </div>
   );
 };

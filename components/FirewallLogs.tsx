@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { FirewallLog } from '../types';
 import { DiagnosticToolType } from '../App';
@@ -7,13 +6,14 @@ import ActionDropdown from './ActionDropdown';
 interface FirewallLogsProps {
   logs: FirewallLog[];
   runDiagnostic: (tool: DiagnosticToolType, target: string) => void;
+  limit?: number;
 }
 
 const getActionClass = (action: 'pass' | 'block') => {
     return action === 'pass' ? 'text-accent-green' : 'text-accent-red';
 };
 
-const FirewallLogs: React.FC<FirewallLogsProps> = ({ logs, runDiagnostic }) => {
+const FirewallLogs: React.FC<FirewallLogsProps> = ({ logs, runDiagnostic, limit }) => {
     const [filter, setFilter] = useState('');
 
     const filteredLogs = useMemo(() => {
@@ -28,6 +28,8 @@ const FirewallLogs: React.FC<FirewallLogsProps> = ({ logs, runDiagnostic }) => {
             log.action.toLowerCase().includes(lowercasedFilter)
         );
     }, [logs, filter]);
+    
+    const limitedLogs = limit ? filteredLogs.slice(0, limit) : filteredLogs;
 
     return (
         <div>
@@ -53,7 +55,7 @@ const FirewallLogs: React.FC<FirewallLogsProps> = ({ logs, runDiagnostic }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700">
-                        {filteredLogs.map((log, index) => (
+                        {limitedLogs.map((log, index) => (
                             <tr key={index} className="hover:bg-gray-600/50">
                                 <td className="px-4 py-2 text-gray-500">{log.timestamp}</td>
                                 <td className="px-4 py-2">{log.interface}</td>

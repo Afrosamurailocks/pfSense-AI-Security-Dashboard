@@ -17,6 +17,7 @@ const Navbar: React.FC<NavbarProps> = ({ setView, currentUser, onLogout }) => {
         subItems: [
           { title: 'User Manager', view: 'user_manager' },
           { title: 'System Logs', view: 'system_logs' },
+          { title: 'Integration Settings', view: 'integration_settings' },
         ],
       },
       {
@@ -39,8 +40,10 @@ const Navbar: React.FC<NavbarProps> = ({ setView, currentUser, onLogout }) => {
         title: 'Status',
         role: 'user',
         subItems: [
-          { title: 'Dashboard', view: 'dashboard' },
-          // A user might only see their own logs, but for simplicity, we use the same view
+          { title: 'Security Overview', view: 'dashboard' },
+          { title: 'My Dashboard', view: 'custom_dashboard' },
+          { title: 'AI Monitoring Agent', view: 'ai_monitoring_agent' },
+          { title: 'Report Center', view: 'report_center' },
           { title: 'Logs', view: 'system_logs' }, 
         ],
       },
@@ -61,7 +64,18 @@ const Navbar: React.FC<NavbarProps> = ({ setView, currentUser, onLogout }) => {
     }
     
     // For standard users, filter menu items to only show what their role allows.
-    return allItems.filter(item => item.role === 'user');
+    const userAllowedItems = allItems.filter(item => item.role === 'user');
+    return userAllowedItems.map(item => {
+        // Additionally filter sub-items if necessary, though current setup is fine
+        return {
+            ...item,
+            subItems: item.subItems.filter(sub => {
+                // Example of finer-grained control if needed in future
+                return true; 
+            })
+        };
+    });
+
 
   }, [currentUser]);
 

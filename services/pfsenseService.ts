@@ -20,7 +20,8 @@ import {
     SmartStatus,
     SocketInfo,
     StatesSummary,
-    TableEntry
+    TableEntry,
+    IntegrationSettings
 } from '../types';
 
 const extractIp = (message: string): string | undefined => {
@@ -99,6 +100,10 @@ const generateMockData = (): PfSenseData => {
     memoryUsage: Math.floor(Math.random() * 40) + 20,
     diskUsage: 35,
     temperature: 55,
+    internetLatency: {
+        average: Math.floor(Math.random() * 40) + 15, // Simulate 15ms-55ms latency
+        std_dev: Math.floor(Math.random() * 10) + 2,   // Simulate 2ms-12ms jitter
+    },
   };
 
   const firewallLogs: FirewallLog[] = [
@@ -235,8 +240,15 @@ const generateMockData = (): PfSenseData => {
         { vhid: 3, ip: '10.10.0.1', status: 'BACKUP' },
     ]
   };
+  
+  const integrationSettings: IntegrationSettings = {
+      status: 'Not Configured',
+      hostname: '',
+      clientId: '',
+      clientToken: ''
+  };
 
-  return { firewallRules, systemLogs, trafficData, vpnConnections, siteToSiteVPNs, systemMetrics, firewallLogs, threatLogs, aliases, users, arpTable, firewallStates, systemActivity, routingTable, authLogs, ndpTable, smartStatus, sockets, statesSummary, pfTables, haStatus };
+  return { firewallRules, systemLogs, trafficData, vpnConnections, siteToSiteVPNs, systemMetrics, firewallLogs, threatLogs, aliases, users, arpTable, firewallStates, systemActivity, routingTable, authLogs, ndpTable, smartStatus, sockets, statesSummary, pfTables, haStatus, integrationSettings };
 };
 
 

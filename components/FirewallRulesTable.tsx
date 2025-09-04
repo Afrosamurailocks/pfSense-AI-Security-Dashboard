@@ -3,6 +3,7 @@ import { FirewallRule } from '../types';
 
 interface FirewallRulesTableProps {
   rules: FirewallRule[];
+  limit?: number;
 }
 
 const getActionClass = (action: 'pass' | 'block' | 'reject') => {
@@ -18,7 +19,9 @@ const isRuleDangerous = (rule: FirewallRule): boolean => {
     return rule.source === 'any' && rule.destination === 'any' && rule.action === 'pass';
 }
 
-const FirewallRulesTable: React.FC<FirewallRulesTableProps> = ({ rules }) => {
+const FirewallRulesTable: React.FC<FirewallRulesTableProps> = ({ rules, limit }) => {
+  const displayedRules = limit ? rules.slice(0, limit) : rules;
+
   return (
     <div className="overflow-x-auto h-80">
       <table className="min-w-full text-sm text-left text-gray-300">
@@ -33,7 +36,7 @@ const FirewallRulesTable: React.FC<FirewallRulesTableProps> = ({ rules }) => {
           </tr>
         </thead>
         <tbody>
-          {rules.map((rule) => (
+          {displayedRules.map((rule) => (
             <tr key={rule.id} className={`border-b border-gray-700 hover:bg-gray-600 ${isRuleDangerous(rule) ? 'bg-red-900/50' : ''}`}>
               <td className={`px-4 py-2 font-medium ${getActionClass(rule.action)}`}>
                 {rule.action.toUpperCase()}

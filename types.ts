@@ -67,6 +67,10 @@ export interface SystemMetrics {
   memoryUsage: number;
   diskUsage: number;
   temperature: number;
+  internetLatency: {
+    average: number; // in ms
+    std_dev: number; // jitter in ms
+  };
 }
 
 export interface FirewallLog {
@@ -207,6 +211,27 @@ export interface HAStatus {
   carpVips: CarpVip[];
 }
 
+export interface IntegrationSettings {
+    status: 'Connected' | 'Not Configured' | 'Error';
+    hostname: string;
+    clientId: string;
+    clientToken: string;
+}
+
+// Report Generation
+export interface ReportSection {
+  id: string;
+  title: string;
+  content: React.ReactNode;
+}
+
+export interface GeneratedReport {
+  title: string;
+  generatedAt: string;
+  sections: ReportSection[];
+}
+
+
 export interface PfSenseData {
     firewallRules: FirewallRule[];
     systemLogs: SystemLog[];
@@ -229,4 +254,48 @@ export interface PfSenseData {
     statesSummary: StatesSummary;
     pfTables: TableEntry[];
     haStatus: HAStatus;
+    integrationSettings: IntegrationSettings;
+}
+
+// Custom Dashboard
+export type WidgetType = 
+  | 'cpu_usage_kpi' 
+  | 'memory_usage_kpi' 
+  | 'vpn_users_kpi' 
+  | 'firewall_temp_kpi'
+  | 'traffic_chart'
+  | 'ha_status'
+  | 'threat_log'
+  | 'system_logs'
+  | 'firewall_logs'
+  | 'firewall_rules';
+
+export interface WidgetConfig {
+  id: string; // Unique ID for the widget instance
+  type: WidgetType;
+}
+
+// AI Monitoring Agent
+export interface BaselineMetrics {
+  dataPoints: number;
+  avgCpu: number;
+  maxCpu: number;
+  avgMem: number;
+  maxMem: number;
+  avgVpnUsers: number;
+  maxVpnUsers: number;
+  peakTrafficIn: number;
+  peakTrafficOut: number;
+  commonBlockedPorts: Record<string, number>;
+  avgLatency: number;
+  maxLatency: number;
+  avgJitter: number;
+}
+
+export interface AIInsight {
+  id: string;
+  timestamp: string;
+  type: 'anomaly' | 'pattern' | 'suggestion';
+  severity: 'low' | 'medium' | 'high';
+  description: string;
 }

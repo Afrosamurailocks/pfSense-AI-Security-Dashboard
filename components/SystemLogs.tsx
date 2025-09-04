@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { SystemLog } from '../types';
 import { DiagnosticToolType } from '../App';
@@ -7,6 +6,7 @@ import ActionDropdown from './ActionDropdown';
 interface SystemLogsProps {
   logs: SystemLog[];
   runDiagnostic: (tool: DiagnosticToolType, target: string) => void;
+  limit?: number;
 }
 
 const getLogColor = (message: string): string => {
@@ -16,7 +16,7 @@ const getLogColor = (message: string): string => {
     return 'text-gray-300';
 }
 
-const SystemLogs: React.FC<SystemLogsProps> = ({ logs, runDiagnostic }) => {
+const SystemLogs: React.FC<SystemLogsProps> = ({ logs, runDiagnostic, limit }) => {
   const endOfLogsRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState('');
 
@@ -29,9 +29,11 @@ const SystemLogs: React.FC<SystemLogsProps> = ({ logs, runDiagnostic }) => {
     );
   }, [logs, filter]);
 
+  const limitedLogs = limit ? filteredLogs.slice(0, limit) : filteredLogs;
+
   useEffect(() => {
     endOfLogsRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [filteredLogs]);
+  }, [limitedLogs]);
 
   return (
     <div>
@@ -45,7 +47,7 @@ const SystemLogs: React.FC<SystemLogsProps> = ({ logs, runDiagnostic }) => {
         />
       </div>
       <div className="h-72 overflow-y-auto bg-gray-900 p-2 rounded-md font-mono text-xs">
-        {filteredLogs.map((log, index) => (
+        {limitedLogs.map((log, index) => (
           <div key={index} className="flex justify-between items-center space-x-2 hover:bg-gray-700 rounded p-1">
             <div className="flex-grow">
               <span className="text-gray-500 mr-2">{log.timestamp}</span>

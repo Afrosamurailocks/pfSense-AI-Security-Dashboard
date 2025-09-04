@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { ThreatLogEntry } from '../types';
 import { DiagnosticToolType } from '../App';
@@ -7,13 +6,14 @@ import ActionDropdown from './ActionDropdown';
 interface ThreatLogProps {
   logs: ThreatLogEntry[];
   runDiagnostic: (tool: DiagnosticToolType, target: string) => void;
+  limit?: number;
 }
 
 const getTypeClass = (type: 'System Alert' | 'Firewall Block') => {
     return type === 'System Alert' ? 'bg-red-600 text-red-100' : 'bg-yellow-600 text-yellow-100';
 };
 
-const ThreatLog: React.FC<ThreatLogProps> = ({ logs, runDiagnostic }) => {
+const ThreatLog: React.FC<ThreatLogProps> = ({ logs, runDiagnostic, limit }) => {
     const [filter, setFilter] = useState('');
 
     const filteredLogs = useMemo(() => {
@@ -26,6 +26,8 @@ const ThreatLog: React.FC<ThreatLogProps> = ({ logs, runDiagnostic }) => {
             log.type.toLowerCase().includes(lowercasedFilter)
         );
     }, [logs, filter]);
+
+    const limitedLogs = limit ? filteredLogs.slice(0, limit) : filteredLogs;
 
     return (
         <div>
@@ -50,7 +52,7 @@ const ThreatLog: React.FC<ThreatLogProps> = ({ logs, runDiagnostic }) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700">
-                        {filteredLogs.map((log, index) => (
+                        {limitedLogs.map((log, index) => (
                             <tr key={index} className="hover:bg-gray-600/50">
                                 <td className="px-4 py-2 text-gray-500 font-mono">{log.timestamp}</td>
                                 <td className="px-4 py-2">

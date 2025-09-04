@@ -77,3 +77,50 @@ export const analyzeSecurityData = async (data: PfSenseData): Promise<GenerateCo
     throw new Error("Could not retrieve security analysis. Please check your API key and network connection.");
   }
 };
+
+export const generateReportSummary = async (data: PfSenseData): Promise<string> => {
+  const insecureRules = data.firewallRules.filter(r => r.source === 'any' && r.destination === 'any' && r.action === 'pass');
+
+  const keyData = {
+    systemStatus: {
+      cpu: data.systemMetrics.cpuUsage,
+      memory: data.systemMetrics.memoryUsage,
+      haStatus: data.haStatus.syncStatus,
+    },
+    threats: {
+      total: data.threatLogs.length,
+      systemAlerts: data.threatLogs.filter(t => t.type === 'System Alert').length,
+      firewallBlocks: data.threatLogs.filter(t => t.type === 'Firewall Block').length,
+    },
+    insecureRules: insecureRules.map(r => `Rule ID ${r.id}: ${r.description}`),
+    vpnActivity: {
+      activeUsers: data.vpnConnections.length,
+      siteToSiteUp: data.siteToSiteVPNs.filter(v => v.status === 'Up').length,
+      siteToSiteTotal: data.siteToSiteVPNs.length,
+    }
+  };
+
+  const prompt = `
+    You are a senior cybersecurity analyst preparing a security report for a pfSense firewall.
+    Based on the following key data points, generate a concise "Executive Summary" for the report.
+
+    The summary should be professional, written in Portuguese, and cover three main points:
+    1.  A high-level overview of the system's current health and security posture.
+    2.  Mention of the most significant findings (e.g., number of threats, presence of insecure rules).
+    3.  A concluding sentence on the overall status.
+
+    Key Data:
+    ${JSON.stringify(keyData, null, 2)}
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+    });
+    return response.text;
+  } catch (error) {
+    console.error("Error calling Gemini API for report summary:", error);
+    return "Falha ao gerar o resumo executivo da IA. Por favor, verifique a chave da API e a conexão de rede.";
+  }
+};
